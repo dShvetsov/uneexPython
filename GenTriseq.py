@@ -10,4 +10,4 @@ v = eval(input())
 n = eval(input())
 
 new_seq = list(GenTriseq(v))
-print(new_seq[n])
+print(new_seq[n] if n < len(new_seq) else "NO")
