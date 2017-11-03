@@ -63,10 +63,7 @@ def Dodgson_algo(mat):
 
 def print_matrix(mat):
     for line in mat:
-        for v in line:
-            print(v, end=', ')
-        print('')
-    print('')
+        print(*line)
 
 def read_matrix():
     first_line = eval(input())
