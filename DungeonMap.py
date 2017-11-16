@@ -54,49 +54,50 @@ class InputReader :
         assert len(ret) == 2, "invalid input string"
         return ret
 
+class MultiPointer():
+    def __init__(self, value):
+        self.pointer = value
+        self.indirect = True
+
+    def access(self):
+        return self.pointer if self.indirect else self.pointer.access()
+
+    def redirect(self, other):
+        self.pointer = other
+        self.indirect = False
+
+    def parent_pointer(self):
+        return self if self.indirect else self.pointer.parent_pointer()
+
 class Areas:
     def __init__(self):
-        self.areas = []
+        self.areas = dict()
 
-    def add_connection(self, conn):
-        new_area = conn.copy()
-        replacing_areas = []
-        for area in self.areas:
-            if conn & area:
-                new_area |= area
-            else:
-                replacing_areas.append(area)
-        self.areas = replacing_areas
-        self.areas.append(new_area)
+    def add_connection(self, fr, to):
+        ptr1 = self.areas.setdefault(fr, MultiPointer({fr})).parent_pointer()
+        ptr2 = self.areas.setdefault(to, MultiPointer({to})).parent_pointer()
+        if ptr1 is ptr2:
+            return
+        result_set = ptr1.access()
+        result_set |= ptr2.access()
+        ptr2.redirect(ptr1)
 
-    def add_connection2(self, fr, to):
-        new_area = set(fr, to)
-        replacing_areas = []
-        for area in self.areas:
-            if fr in area or to in area:
-                new_area |= area
-            else:
-                replacing_areas.append(area)
-        self.areas = replacing_areas
-        self.areas.append(new_area)
-
-    def isreachable(self, conn):
-        for area in self.areas:
-            if area.issuperset(conn):
-                return True
-        return False
+    def isreachable(self, start, end):
+        from_ptr = self.areas.get(start, None)
+        return from_ptr is not None and end in from_ptr.access()
 
     def print_areas(self):
         for i in self.areas:
-            print(i)
+            print(i, self.areas[i].access())
+            print("########################################")
 
 if __name__ == "__main__":
     ir = InputReader()
     areas = Areas()
     for fr, to in ir.edges():
-        areas.add_connection(set((fr, to)))
+        areas.add_connection(fr, to)
 
     enter, exit = ir.end_points()
-    print("YES" if areas.isreachable({enter, exit}) else "NO")
+    print("YES" if areas.isreachable(enter, exit) else "NO")
 
 
