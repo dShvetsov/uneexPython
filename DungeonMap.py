@@ -39,7 +39,6 @@ class InputReader :
         while self.__is_edge(self.nextline):
             yield self.__extract_edge(self.nextline)
             self.nextline = input()
-
     def end_points(self):
         assert not self.__is_edge(self.nextline), "Not all edges was read"
         fr = self.nextline
@@ -54,42 +53,40 @@ class InputReader :
         assert len(ret) == 2, "invalid input string"
         return ret
 
-class MultiPointer():
-    def __init__(self, value):
-        self.pointer = value
-        self.indirect = True
-
-    def access(self):
-        return self.pointer if self.indirect else self.pointer.access()
-
-    def redirect(self, other):
-        self.pointer = other
-        self.indirect = False
-
-    def parent_pointer(self):
-        return self if self.indirect else self.pointer.parent_pointer()
-
 class Areas:
     def __init__(self):
         self.areas = dict()
 
     def add_connection(self, fr, to):
-        ptr1 = self.areas.setdefault(fr, MultiPointer({fr})).parent_pointer()
-        ptr2 = self.areas.setdefault(to, MultiPointer({to})).parent_pointer()
-        if ptr1 is ptr2:
-            return
-        result_set = ptr1.access()
-        result_set |= ptr2.access()
-        ptr2.redirect(ptr1)
+        s1 = self.areas.setdefault(fr, {fr})
+        s2 = self.areas.setdefault(to, {to})
+        s1.add(to)
+        s2.add(fr)
+
+    def close(self, what, predicat):
+        s = self.areas.get(what)
+        if s is None: return False, None
+        while True:
+            closed_set = s.copy()
+            for i in s:
+                closed_set |= self.areas[i]
+            if predicat(closed_set):
+                return True, closed_set
+            if s == closed_set :
+                break
+            s = closed_set
+        return False, s
+
 
     def isreachable(self, start, end):
-        from_ptr = self.areas.get(start, None)
-        return from_ptr is not None and end in from_ptr.access()
+        pred = lambda s : end in s
+        res, close_set = self.close(start, pred)
+        return res
 
-    def print_areas(self):
-        for i in self.areas:
-            print(i, self.areas[i].access())
-            print("########################################")
+#    def print_areas(self):
+#        for i in self.areas:
+#            print(i, self.areas[i].access())
+#            print("########################################")
 
 if __name__ == "__main__":
     ir = InputReader()
