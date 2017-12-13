@@ -59,27 +59,22 @@ class InvalidAssigment(Exception) : pass
 class InvalidIdentifier(Exception) : pass
 
 def main():
-    global line, expr, identifier, global_builtins
-    __builtins__ = global_builtins
+    environment = dict()
     for line in sys.stdin:
         line = line.strip()
         try:
             if not line.startswith('#') and len(line) > 0:
                 expr = line.split('=')
-                if len(expr) == 1 : print(eval(line))
+                if len(expr) == 1 : print(eval(line, environment))
                 elif len(expr) == 2 :
                     identifier = expr[0].strip()
-                    if not identifier.isidentifier() : raise InvalidIdentifier(identifier)
-                    locals()[identifier] = eval(expr[1])
-                else : raise InvalidAssigment(line)
-        except InvalidIdentifier as ii:
-            print ("invalid identifier '{}'".format(ii))
-        except InvalidAssigment as ia:
-            print ("invalid assignment '{}'".format(ia))
+                    if not identifier.isidentifier():
+                        raise IndentationError("invalid identifier '{}'".format(identifier))
+                    environment[identifier] = eval(expr[1], environment)
+                else : raise AttributeError("invalid assignment '{}'".format(line))
         except Exception as e:
             print (e)
 
 global_builtins = __builtins__
 if __name__ == '__main__':
-    __name__='builtins'
     main()
